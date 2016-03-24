@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context=".Game_mainMenu"
+    tools:showIn="@layout/activity_game_main_menu">
+
+    <Button android:id="@+id/btn_Game_oneDice"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight=".5"
+        android:text="@string/button_gameOne" />
+    android:onClick="selectGame" />
+
+    <Button android:id="@+id/btn_Game_twoDice"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/button_gameTwo"
+        android:onClick="selectGame"
+        android:layout_weight=".5" />
+
+</LinearLayout>
+

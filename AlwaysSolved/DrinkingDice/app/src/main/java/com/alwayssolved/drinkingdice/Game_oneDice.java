@@ -2,10 +2,13 @@ package com.alwayssolved.drinkingdice;
 
 import android.media.AudioManager;
 import android.media.SoundPool;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.widget.ImageView;
 
@@ -13,10 +16,8 @@ import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
-
-public class MainActivity extends AppCompatActivity {
+public class Game_oneDice extends AppCompatActivity {
     ImageView dice_picture1;		//reference to dice picture
-    ImageView dice_picture2;		//reference to dice picture
     Random rng=new Random();	//generate random numbers
     SoundPool dice_sound = new SoundPool(1, AudioManager.STREAM_MUSIC,0);
     int sound_id;		//Used to control sound stream return by SoundPool
@@ -27,12 +28,11 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_game_one_dice);
         //load dice sound
         sound_id=dice_sound.load(this,R.raw.shake_dice,1);
         //get reference to image widget
         dice_picture1 = (ImageView) findViewById(R.id.imageView1);
-        dice_picture2 = (ImageView) findViewById(R.id.imageView2);
         //link handler to callback
         handler=new Handler(callback);
     }
@@ -45,7 +45,6 @@ public class MainActivity extends AppCompatActivity {
             rolling=true;
             //Show rolling image
             dice_picture1.setImageResource(R.drawable.dice3droll);
-            dice_picture2.setImageResource(R.drawable.dice3droll);
             //Start rolling sound
             dice_sound.play(sound_id,1.0f,1.0f,0,0,1.0f);
             //Pause to allow image to update
@@ -69,27 +68,21 @@ public class MainActivity extends AppCompatActivity {
             switch(rng.nextInt(6)+1) {
                 case 1:
                     dice_picture1.setImageResource(R.drawable.one);
-                    dice_picture2.setImageResource(R.drawable.one);
                     break;
                 case 2:
                     dice_picture1.setImageResource(R.drawable.two);
-                    dice_picture2.setImageResource(R.drawable.two);
                     break;
                 case 3:
                     dice_picture1.setImageResource(R.drawable.three);
-                    dice_picture2.setImageResource(R.drawable.three);
                     break;
                 case 4:
                     dice_picture1.setImageResource(R.drawable.four);
-                    dice_picture2.setImageResource(R.drawable.four);
                     break;
                 case 5:
                     dice_picture1.setImageResource(R.drawable.five);
-                    dice_picture2.setImageResource(R.drawable.five);
                     break;
                 case 6:
                     dice_picture1.setImageResource(R.drawable.six);
-                    dice_picture2.setImageResource(R.drawable.six);
                     break;
                 default:
             }
