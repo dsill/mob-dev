@@ -2,6 +2,7 @@ package com.alwayssolved.drinkingdice;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import android.os.Bundle;
@@ -25,6 +26,7 @@ public class Game_twoDice extends AppCompatActivity {
 
     ImageView dicePicture1;		    //reference to dice picture
     ImageView dicePicture2;		    //reference to dice picture
+    ImageView dicePicture;
     Random rng = new Random();	    //generate random numbers
     SoundPool dice_sound = new SoundPool(1, AudioManager.STREAM_MUSIC, 0);
     int sound_id;		            //Used to control sound stream return by SoundPool
@@ -91,10 +93,12 @@ public class Game_twoDice extends AppCompatActivity {
 
 
     //User clicked dice, lets start
-    public void HandleDiceClick(View arg0) {
+    public void HandleDiceClick(View v) {
         if(!rolling) {
             //TODO: set clicked die as selected
-            //dicePicture2.setColorFilter(Color.LTGRAY);
+            dicePicture = (ImageView) findViewById(v.getId());
+            dicePicture.setColorFilter(Color.LTGRAY, PorterDuff.Mode.MULTIPLY);
+
         }
     }
 
@@ -107,9 +111,6 @@ public class Game_twoDice extends AppCompatActivity {
             dicePicture1.setImageResource(R.drawable.dice3droll);
             dicePicture2.setImageResource(R.drawable.dice3droll);
 
-
-
-
             //Start rolling sound
             dice_sound.play(sound_id, 1.0f, 1.0f, 0, 0, 1.0f);
 
@@ -117,9 +118,6 @@ public class Game_twoDice extends AppCompatActivity {
             timer.schedule(new Roll(), 600);
         }
     }
-
-
-
 
 
     //When pause completed message sent to callback
