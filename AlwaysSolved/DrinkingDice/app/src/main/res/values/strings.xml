@@ -2,11 +2,12 @@
     <string name="app_name">DrinkingDice</string>
     <string name="action_settings">Settings</string>
     <string name="title_activity_main_activity">Menu</string>
-    <string name="title_activity_main_game_one_dice">MainGame_oneDice</string>
-    <string name="title_activity_main_game_two_dice">MainGame_twoDice</string>
     <string name="button_gameOne">One Die</string>
     <string name="button_gameTwo">Two Dice</string>
+    <string name="button_oneFourTwentyFour">1–4–24</string>
+    <string name="button_oneFourTwentyFour_done">Submit Score</string>
     <string name="title_activity_game_main_menu">Game_mainMenu</string>
     <string name="title_activity_game_one_dice">Game_oneDice</string>
     <string name="title_activity_game_two_dice">Game_twoDice</string>
+    <string name="title_activity_one_four_twenty_four">1–4–24</string>
 </resources>

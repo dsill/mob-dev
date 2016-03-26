@@ -33,6 +33,7 @@ public class Game_twoDice extends AppCompatActivity {
     Handler handler;	            //Post message to start roll
     Timer timer = new Timer();	    //Used to implement feedback to user
     boolean rolling = false;		//Is die rolling?
+    boolean turnStarted = false;	//has the user started their turn
 
     HashMap<Integer, Integer> diceImages = new HashMap<>();
 
@@ -59,33 +60,8 @@ public class Game_twoDice extends AppCompatActivity {
         dicePicture1 = (ImageView) findViewById(R.id.imageView1);
         dicePicture2 = (ImageView) findViewById(R.id.imageView2);
 
-        /*dicePicture1.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                if(!rolling) {
-                    rolling = true;
-                    dicePicture1.setColorFilter(Color.LTGRAY);
-
-
-                }
-                return false;
-
-            }
-        });
-
-        dicePicture2.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                if(!rolling) {
-                    rolling = true;
-                    dicePicture2.setColorFilter(Color.LTGRAY);
-
-
-                }
-                return false;
-
-            }
-        });*/
+        dicePicture1.setClickable(false);
+        dicePicture2.setClickable(false);
 
         //link handler to callback
         handler = new Handler(callback);
@@ -95,29 +71,59 @@ public class Game_twoDice extends AppCompatActivity {
     //User clicked dice, lets start
     public void HandleDiceClick(View v) {
         if(!rolling) {
-            //TODO: set clicked die as selected
             dicePicture = (ImageView) findViewById(v.getId());
-            dicePicture.setColorFilter(Color.LTGRAY, PorterDuff.Mode.MULTIPLY);
 
+            if (!dicePicture.isSelected()) {
+                dicePicture.setColorFilter(Color.LTGRAY, PorterDuff.Mode.MULTIPLY);
+                dicePicture.setSelected(true);
+            }
+            else {
+                if(dicePicture.isClickable()) {
+                    dicePicture.setColorFilter(null);
+                    dicePicture.setSelected(false);
+                }
+            }
         }
     }
 
     //User clicked roll button, lets start
-    public void HandleRollClick(View arg0) {
-        if(!rolling) {
-            rolling = true;
+    public void HandleRollClick(View v) {
+        //turn has started so make dice clickable
+        dicePicture1.setClickable(true);
+        dicePicture2.setClickable(true);
 
-            //Show rolling image
-            dicePicture1.setImageResource(R.drawable.dice3droll);
-            dicePicture2.setImageResource(R.drawable.dice3droll);
+        if (!rolling) {
 
-            //Start rolling sound
-            dice_sound.play(sound_id, 1.0f, 1.0f, 0, 0, 1.0f);
+            if (!dicePicture1.isSelected()) {
+                //Show rolling image
+                dicePicture1.setImageResource(R.drawable.dice3droll);
+                rolling = true;
+            }
+            else{
+                //do not allow more clicks on this die
+                dicePicture1.setClickable(false);
+            }
 
-            //Pause to allow image to update
-            timer.schedule(new Roll(), 600);
+            if (!dicePicture2.isSelected()) {
+                //Show rolling image
+                dicePicture2.setImageResource(R.drawable.dice3droll);
+                rolling = true;
+            }
+            else{
+                //do not allow more clicks on this die
+                dicePicture2.setClickable(false);
+            }
+
+            if (rolling) {
+                //Start rolling sound
+                dice_sound.play(sound_id, 1.0f, 1.0f, 0, 0, 1.0f);
+
+                //Pause to allow image to update
+                timer.schedule(new Roll(), 600);
+            }
         }
     }
+
 
 
     //When pause completed message sent to callback
@@ -133,8 +139,15 @@ public class Game_twoDice extends AppCompatActivity {
         public boolean handleMessage(Message msg) {
             //Get roll result
             //nextInt starts at 0 hence + 1
-            dicePicture1.setImageResource(diceImages.get(rng.nextInt(6) + 1));
-            dicePicture2.setImageResource(diceImages.get(rng.nextInt(6) + 1));
+            if (!dicePicture1.isSelected()) {
+                //Show roll result
+                dicePicture1.setImageResource(diceImages.get(rng.nextInt(6) + 1));
+            }
+
+            if (!dicePicture2.isSelected()) {
+                //Show roll result
+                dicePicture2.setImageResource(diceImages.get(rng.nextInt(6) + 1));
+            }
 
             rolling = false;	//user can press again
             return true;

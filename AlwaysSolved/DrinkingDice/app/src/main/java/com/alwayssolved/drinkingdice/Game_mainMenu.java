@@ -21,11 +21,11 @@ public class Game_mainMenu extends AppCompatActivity {
 
         switch(view.getId())
         {
-            case R.id.btn_Game_oneDice:
-                intent = new Intent(this, Game_oneDice.class);
-                break;
             case R.id.btn_Game_twoDice:
                 intent = new Intent(this, Game_twoDice.class);
+                break;
+            case R.id.btn_Game_oneFourTwentyFour:
+                intent = new Intent(this, oneFourTwentyFour.class);
                 break;
             default:
                 throw new RuntimeException("Invalid button ID");
