@@ -6,8 +6,9 @@
     <string name="button_gameTwo">Two Dice</string>
     <string name="button_oneFourTwentyFour">1–4–24</string>
     <string name="button_oneFourTwentyFour_done">Submit Score</string>
-    <string name="title_activity_game_main_menu">Game_mainMenu</string>
-    <string name="title_activity_game_one_dice">Game_oneDice</string>
-    <string name="title_activity_game_two_dice">Game_twoDice</string>
+    <string name="title_activity_game_main_menu">DrinkingDice</string>
+    <string name="title_activity_game_two_dice">Two Dice</string>
     <string name="title_activity_one_four_twenty_four">1–4–24</string>
+    <string name="is_qualified">Qualified</string>
+    <string name="not_qualified">Not Qualified</string>
 </resources>

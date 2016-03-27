@@ -5,22 +5,52 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:paddingLeft="16dp"
-    android:paddingRight="16dp"
+    android:paddingRight="5dp"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:showIn="@layout/activity_one_four_twenty_four"
     android:paddingTop="30dp"
     android:paddingBottom="30dp"
     android:longClickable="false"
-    android:gravity="center_horizontal"
     android:orientation="vertical">
 
-
-    <LinearLayout
+    <LinearLayout android:id="@+id/rowScore"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:layout_gravity="top|left"
         android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true">
+
+        <TextView android:id="@+id/isQualifiedText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:text="@string/not_qualified"
+            android:layout_weight="1"/>
+
+        <TextView android:id="@+id/currScorePrefix"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:text="Score: "
+            android:layout_weight="2"
+            android:gravity="end" />
+
+        <TextView android:id="@+id/currScoreText"
+            android:layout_width="30dp"
+            android:layout_height="wrap_content"
+            android:text="0"
+            android:layout_marginTop="5dp" />
+
+    </LinearLayout>
+
+    <LinearLayout  android:id="@+id/rowDice"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_gravity="top|left"
+        android:layout_below="@+id/rowScore"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true">
 
@@ -81,25 +111,35 @@
 
     </LinearLayout>
 
-    <LinearLayout
+    <LinearLayout android:id="@+id/rowButtons"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_gravity="center_horizontal">
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_gravity="right">
 
         <ImageView android:id="@+id/imageViewSubmit"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
             android:onClick="HandleSubmitScore"
-            android:src="@drawable/dice3droll"
+            android:src="@drawable/postscorebutton_off_down"
             android:layout_margin="5dp"
             android:contentDescription="Submit"
-            android:layout_weight="1" />
+            android:layout_gravity="right" />
+
+        <ImageView android:id="@+id/imageViewRoll"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:onClick="HandleRollClick"
+            android:src="@drawable/dicerollbutton_up"
+            android:layout_margin="5dp"
+            android:contentDescription="Roll"
+            android:layout_gravity="right" />
 
     </LinearLayout>
+
 
 </RelativeLayout>
 
