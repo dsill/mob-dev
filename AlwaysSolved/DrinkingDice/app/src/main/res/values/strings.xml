@@ -11,4 +11,6 @@
     <string name="title_activity_one_four_twenty_four">1–4–24</string>
     <string name="is_qualified">Qualified</string>
     <string name="not_qualified">Not Qualified</string>
+    <string name="none_selected">At least one die must be selected...</string>
+    <string name="player">Player</string>
 </resources>

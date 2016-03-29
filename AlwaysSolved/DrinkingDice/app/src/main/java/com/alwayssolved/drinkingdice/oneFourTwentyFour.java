@@ -1,14 +1,22 @@
 package com.alwayssolved.drinkingdice;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.StringRes;
+import android.support.design.widget.Snackbar;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.SpannableStringBuilder;
+import android.text.style.ImageSpan;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -41,6 +49,7 @@ public class oneFourTwentyFour extends AppCompatActivity {
     String rollError = "";              //roll validation error
     TextView isQualifiedText;           //reference to isQualifiedText
     TextView currScoreText;             //reference to currScoreText
+    TextView currPlayerText;            //reference to currPlayerText
 
     ImageView dicePicture1;		        //reference to dice picture
     ImageView dicePicture2;		        //reference to dice picture
@@ -100,12 +109,12 @@ public class oneFourTwentyFour extends AppCompatActivity {
         diceImages.put(6, R.drawable.six);
 
         //create hashMap of dice values
-        diceImages.put(R.id.imageView1, 0);
-        diceImages.put(R.id.imageView2, 0);
-        diceImages.put(R.id.imageView3, 0);
-        diceImages.put(R.id.imageView4, 0);
-        diceImages.put(R.id.imageView5, 0);
-        diceImages.put(R.id.imageView6, 0);
+        diceValues.put(R.id.imageView1, 0);
+        diceValues.put(R.id.imageView2, 0);
+        diceValues.put(R.id.imageView3, 0);
+        diceValues.put(R.id.imageView4, 0);
+        diceValues.put(R.id.imageView5, 0);
+        diceValues.put(R.id.imageView6, 0);
 
         for (int i = 1; i <= qtyPlayers; i++) {
             playerScores.put(i, 0);
@@ -113,6 +122,9 @@ public class oneFourTwentyFour extends AppCompatActivity {
 
         isQualifiedText = (TextView) findViewById(R.id.isQualifiedText);
         currScoreText = (TextView) findViewById(R.id.currScoreText);
+        currPlayerText = (TextView) findViewById(R.id.currPlayerText);
+
+        currPlayerText.setText("Player " + Integer.toString(currPlayer));
 
         dicePicture1.setClickable(false);
         dicePicture2.setClickable(false);
@@ -155,10 +167,7 @@ public class oneFourTwentyFour extends AppCompatActivity {
     //User clicked roll button, lets start
     public void HandleRollClick(View v) {
         //make sure at least one die was selected if not first roll
-        if(!isFirstRoll) {
-            isContinue();
-        }
-        else {
+        if(isFirstRoll) {
             //turn has started so make dice clickable
             dicePicture1.setClickable(true);
             dicePicture2.setClickable(true);
@@ -169,6 +178,9 @@ public class oneFourTwentyFour extends AppCompatActivity {
 
             //first roll completed
             isFirstRoll = false;
+        }
+        else {
+            isContinue();
         }
 
         if(rollContinue) {
@@ -245,7 +257,9 @@ public class oneFourTwentyFour extends AppCompatActivity {
             }
         }
         else {
-            //TODO: display error message [rollError]
+            //Display noneSelected error message
+            Snackbar noneSelected = Snackbar.make(findViewById(R.id.oneFourTwentyFourCoordinator), R.string.none_selected, Snackbar.LENGTH_LONG);
+            noneSelected.show();
         }
     }
 
@@ -413,6 +427,98 @@ public class oneFourTwentyFour extends AppCompatActivity {
     //User clicked submit button
     public void HandleSubmitScore(View v) {
         //TODO: save score if qualified and start next turn
+        if(isQualifiedOne && isQualifiedOne){
+            playerScores.put(currPlayer, currPlayerScore);
+        }
+        else{
+            playerScores.put(currPlayer, -1);
+        }
+
+        //increment current player
+        currPlayer++;
+
+        //go to next player or end round if last player has rolled
+        if(currPlayer <= qtyPlayers){
+            nextPlayer();
+        }
+        else{
+            endRound();
+        }
+
+    }
+
+    //Reset for next player's roll
+    public void nextPlayer() {
+        //Display nextPlayer dialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("Your score: " + Integer.toString(currPlayerScore));
+        //.setTitle(R.string.dialog_title);
+        builder.setPositiveButton("next player", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                // User clicked OK button
+                isQualifiedOne = false;                 //0 if "One" is not locked yet
+                isQualifiedFour = false;                //0 if "Four" is not locked yet
+                isQualifiedOne_thisRoll = false;        //0 if "One" is not locked yet
+                isQualifiedFour_thisRoll = false;       //0 if "Four" is not locked yet
+                qtyOneSelected_thisRoll = 0;            //# of 1's selected on the current roll
+                qtyFourSelected_thisRoll = 0;           //# of 4's selected on the current roll
+
+                qtyPrevLocked = 0;
+
+                isFirstRoll = true;             //set to false after first roll
+                rollContinue = true;            //roll validated and may continue
+
+                diceValue1 = 0;                 //value of die at position 1
+                diceValue2 = 0;                 //value of die at position 2
+                diceValue3 = 0;                 //value of die at position 3
+                diceValue4 = 0;                 //value of die at position 4
+                diceValue5 = 0;                 //value of die at position 5
+                diceValue6 = 0;                 //value of die at position 6
+
+                rolling = false;		        //Is die rolling?
+
+                //create hashMap of dice values
+                diceValues.put(R.id.imageView1, 0);
+                diceValues.put(R.id.imageView2, 0);
+                diceValues.put(R.id.imageView3, 0);
+                diceValues.put(R.id.imageView4, 0);
+                diceValues.put(R.id.imageView5, 0);
+                diceValues.put(R.id.imageView6, 0);
+
+                dicePicture1.setClickable(false);
+                dicePicture2.setClickable(false);
+                dicePicture3.setClickable(false);
+                dicePicture4.setClickable(false);
+                dicePicture5.setClickable(false);
+                dicePicture6.setClickable(false);
+
+                scorePost.setClickable(false);
+
+                dicePicture1.setImageResource(R.drawable.dice3droll);
+                dicePicture2.setImageResource(R.drawable.dice3droll);
+                dicePicture3.setImageResource(R.drawable.dice3droll);
+                dicePicture4.setImageResource(R.drawable.dice3droll);
+                dicePicture5.setImageResource(R.drawable.dice3droll);
+                dicePicture6.setImageResource(R.drawable.dice3droll);
+
+                dicePicture1.setColorFilter(null);
+                dicePicture2.setColorFilter(null);
+                dicePicture3.setColorFilter(null);
+                dicePicture4.setColorFilter(null);
+                dicePicture5.setColorFilter(null);
+                dicePicture6.setColorFilter(null);
+
+                currPlayerText.setText("Player " + Integer.toString(currPlayer));
+                isQualifiedText.setText(R.string.not_qualified);
+            }
+        });
+
+        AlertDialog nextPlayerDialog = builder.create();
+        nextPlayerDialog.show();
+    }
+
+    //All users have completed their rolls
+    public void endRound() {
 
     }
 
