@@ -23,10 +23,10 @@
         android:layout_alignParentStart="true">
 
         <TextView android:id="@+id/currPlayerText"
-            android:layout_width="match_parent"
+            android:layout_width="51dp"
             android:layout_height="wrap_content"
             android:layout_margin="5dp"
-            android:layout_weight="2"/>
+            android:text="@string/currPlayer" />
 
         <TextView android:id="@+id/isQualifiedText"
             android:layout_width="match_parent"
@@ -35,19 +35,13 @@
             android:text="@string/not_qualified"
             android:layout_weight="1"/>
 
-        <TextView android:id="@+id/currScorePrefix"
+        <TextView android:id="@+id/currPlayerScoreText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="5dp"
-            android:text="Score: "
+            android:text="@string/currPlayerScore"
             android:layout_weight="2"
             android:gravity="end" />
-
-        <TextView android:id="@+id/currScoreText"
-            android:layout_width="30dp"
-            android:layout_height="wrap_content"
-            android:text="0"
-            android:layout_marginTop="5dp" />
 
     </LinearLayout>
 

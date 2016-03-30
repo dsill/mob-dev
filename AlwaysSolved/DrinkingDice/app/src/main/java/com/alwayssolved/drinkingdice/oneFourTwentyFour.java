@@ -31,25 +31,44 @@ public class oneFourTwentyFour extends AppCompatActivity {
     int qtyDice = 6;                    //# of dice required for this game
     int qtyPlayers = 4;                 //# of players
     int currPlayer = 1;                 //current player
-    int currPlayerScore = 0;            //tally of current player's score
+    int currPlayerScore;                //tally of current player's score
 
-    boolean isQualifiedOne = false;     //0 if "One" is not locked yet
-    boolean isQualifiedFour = false;    //0 if "Four" is not locked yet
-    boolean isQualifiedOne_thisRoll = false;     //0 if "One" is not locked yet
-    boolean isQualifiedFour_thisRoll = false;    //0 if "Four" is not locked yet
-    int qtyOneSelected_thisRoll = 0;    //# of 1's selected on the current roll
-    int qtyFourSelected_thisRoll = 0;    //# of 4's selected on the current roll
+    boolean isQualifiedOne;             //0 if "One" is not locked yet
+    boolean isQualifiedFour;            //0 if "Four" is not locked yet
+    boolean isQualifiedOne_thisRoll;    //0 if "One" is not locked yet
+    boolean isQualifiedFour_thisRoll;   //0 if "Four" is not locked yet
+    int qtyOneSelected_thisRoll;        //# of 1's selected on the current roll
+    int qtyFourSelected_thisRoll;       //# of 4's selected on the current roll
 
-    int qtyPrevLocked = 0;              //qty dice locked as of last roll
-    int qtyCurrLocked = 0;              //qty dice locked currently
+    int qtyPrevLocked;                  //qty dice locked as of last roll
+    int qtyCurrLocked;                  //qty dice locked currently
 
-    boolean isFirstRoll = true;         //set to false after first roll
-    boolean rollContinue = true;        //roll validated and may continue
+    boolean isFirstRoll;                //set to false after first roll
+    boolean rollContinue;               //roll validated and may continue
 
-    String rollError = "";              //roll validation error
-    TextView isQualifiedText;           //reference to isQualifiedText
-    TextView currScoreText;             //reference to currScoreText
+    boolean rolling;		            //Is die rolling?
+    boolean isLastPlayer;               //Is this the final roller
+
+    String rollError;                   //roll validation error
+
+    int diceValue1;                     //value of die at position 1
+    int diceValue2;                     //value of die at position 2
+    int diceValue3;                     //value of die at position 3
+    int diceValue4;                     //value of die at position 4
+    int diceValue5;                     //value of die at position 5
+    int diceValue6;                     //value of die at position 5
+
+    Random rng = new Random();	        //generate random numbers
+    SoundPool dice_sound = new SoundPool(1, AudioManager.STREAM_MUSIC, 0);
+    int sound_id;		                //Used to control sound stream return by SoundPool
+    Handler handler;	                //Post message to start roll
+    Timer timer = new Timer();	        //Used to implement feedback to user
+
+    //Declare Views
     TextView currPlayerText;            //reference to currPlayerText
+    TextView isQualifiedText;           //reference to isQualifiedText
+    TextView currPlayerScoreText;       //reference to currPlayerScoreText
+
 
     ImageView dicePicture1;		        //reference to dice picture
     ImageView dicePicture2;		        //reference to dice picture
@@ -62,24 +81,11 @@ public class oneFourTwentyFour extends AppCompatActivity {
     ImageView diceRoll;		            //reference to roll dice button
     ImageView scorePost;                //reference to post score button
 
-    int diceValue1 = 0;                 //value of die at position 1
-    int diceValue2 = 0;                 //value of die at position 2
-    int diceValue3 = 0;                 //value of die at position 3
-    int diceValue4 = 0;                 //value of die at position 4
-    int diceValue5 = 0;                 //value of die at position 5
-    int diceValue6 = 0;                 //value of die at position 6
-
-    Random rng = new Random();	    //generate random numbers
-    SoundPool dice_sound = new SoundPool(1, AudioManager.STREAM_MUSIC, 0);
-    int sound_id;		            //Used to control sound stream return by SoundPool
-    Handler handler;	            //Post message to start roll
-    Timer timer = new Timer();	    //Used to implement feedback to user
-
-    boolean rolling = false;		//Is die rolling?
-
+    //Declare HashMaps
     HashMap<Integer, Integer> diceImages = new HashMap<>();
     HashMap<Integer, Integer> diceValues = new HashMap<>();
     HashMap<Integer, Integer> playerScores = new HashMap<>();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,14 +105,56 @@ public class oneFourTwentyFour extends AppCompatActivity {
         scorePost = (ImageView) findViewById(R.id.imageViewSubmit);
         diceRoll = (ImageView) findViewById(R.id.imageViewRoll);
 
-
-        //create hashMap of dice sides
+        //populate hashMap of dice sides
         diceImages.put(1, R.drawable.one);
         diceImages.put(2, R.drawable.two);
         diceImages.put(3, R.drawable.three);
         diceImages.put(4, R.drawable.four);
         diceImages.put(5, R.drawable.five);
         diceImages.put(6, R.drawable.six);
+
+        //populate hashMap of player scores
+        for (int i = 1; i <= qtyPlayers; i++) {
+            playerScores.put(i, 0);
+        }
+
+        currPlayerText = (TextView) findViewById(R.id.currPlayerText);
+        isQualifiedText = (TextView) findViewById(R.id.isQualifiedText);
+        currPlayerScoreText = (TextView) findViewById(R.id.currPlayerScoreText);
+
+
+        //link handler to callback
+        handler = new Handler(callback);
+
+        //call method to initialize turn-specific values
+        turnInitialize();
+    }
+
+    //Reset turn-specific values for next player's roll
+    public void turnInitialize() {
+        //TODO:fix issue with dice not changing when new turn starts
+        currPlayerScore = 0;                    //set new player's score to 0
+
+        isQualifiedOne = false;                 //0 if "One" is not locked yet
+        isQualifiedFour = false;                //0 if "Four" is not locked yet
+        isQualifiedOne_thisRoll = false;        //0 if "One" is not locked yet
+        isQualifiedFour_thisRoll = false;       //0 if "Four" is not locked yet
+        qtyOneSelected_thisRoll = 0;            //# of 1's selected on the current roll
+        qtyFourSelected_thisRoll = 0;           //# of 4's selected on the current roll
+
+        qtyPrevLocked = 0;
+
+        isFirstRoll = true;             //set to false after first roll
+        rollContinue = true;            //roll validated and may continue
+
+        diceValue1 = 0;                 //value of die at position 1
+        diceValue2 = 0;                 //value of die at position 2
+        diceValue3 = 0;                 //value of die at position 3
+        diceValue4 = 0;                 //value of die at position 4
+        diceValue5 = 0;                 //value of die at position 5
+        diceValue6 = 0;                 //value of die at position 6
+
+        rolling = false;		        //Is die rolling?
 
         //create hashMap of dice values
         diceValues.put(R.id.imageView1, 0);
@@ -116,16 +164,6 @@ public class oneFourTwentyFour extends AppCompatActivity {
         diceValues.put(R.id.imageView5, 0);
         diceValues.put(R.id.imageView6, 0);
 
-        for (int i = 1; i <= qtyPlayers; i++) {
-            playerScores.put(i, 0);
-        }
-
-        isQualifiedText = (TextView) findViewById(R.id.isQualifiedText);
-        currScoreText = (TextView) findViewById(R.id.currScoreText);
-        currPlayerText = (TextView) findViewById(R.id.currPlayerText);
-
-        currPlayerText.setText("Player " + Integer.toString(currPlayer));
-
         dicePicture1.setClickable(false);
         dicePicture2.setClickable(false);
         dicePicture3.setClickable(false);
@@ -133,36 +171,41 @@ public class oneFourTwentyFour extends AppCompatActivity {
         dicePicture5.setClickable(false);
         dicePicture6.setClickable(false);
 
+        dicePicture1.setSelected(false);
+        dicePicture2.setSelected(false);
+        dicePicture3.setSelected(false);
+        dicePicture4.setSelected(false);
+        dicePicture5.setSelected(false);
+        dicePicture6.setSelected(false);
+
         scorePost.setClickable(false);
+        scorePost.setImageResource(R.drawable.postscorebutton_off_down);
 
-        //link handler to callback
-        handler = new Handler(callback);
+        dicePicture1.setImageResource(R.drawable.dice3droll);
+        dicePicture2.setImageResource(R.drawable.dice3droll);
+        dicePicture3.setImageResource(R.drawable.dice3droll);
+        dicePicture4.setImageResource(R.drawable.dice3droll);
+        dicePicture5.setImageResource(R.drawable.dice3droll);
+        dicePicture6.setImageResource(R.drawable.dice3droll);
+
+        dicePicture1.setColorFilter(null);
+        dicePicture2.setColorFilter(null);
+        dicePicture3.setColorFilter(null);
+        dicePicture4.setColorFilter(null);
+        dicePicture5.setColorFilter(null);
+        dicePicture6.setColorFilter(null);
+
+        //call method to build and replace player token
+        buildPlayerString();
+
+        //call method to build and replace score token
+        buildScoreString();
+
+        //reset qualified string
+        isQualifiedText.setText(R.string.not_qualified);
+
     }
 
-
-    //User clicked dice, lets start
-    public void HandleDiceClick(View v) {
-        if(!rolling) {
-            dicePicture = (ImageView) findViewById(v.getId());
-
-            if (!dicePicture.isSelected()) {
-                dicePicture.setColorFilter(Color.LTGRAY, PorterDuff.Mode.MULTIPLY);
-                dicePicture.setSelected(true);
-            }
-            else {
-                if(dicePicture.isClickable()) {
-                    dicePicture.setColorFilter(null);
-                    dicePicture.setSelected(false);
-                }
-            }
-
-            //validate qualifiers and calculate score
-            calcScore(v);
-
-            //check if turn can be ended
-            isSubmit();
-        }
-    }
 
     //User clicked roll button, lets start
     public void HandleRollClick(View v) {
@@ -263,7 +306,6 @@ public class oneFourTwentyFour extends AppCompatActivity {
         }
     }
 
-
     //User clicked roll button, lets start
     public void isContinue() {
         //get current # of locked dice
@@ -279,6 +321,31 @@ public class oneFourTwentyFour extends AppCompatActivity {
         }
     }
 
+
+    //User clicked dice, lets start
+    public void HandleDiceClick(View v) {
+        if(!rolling) {
+            dicePicture = (ImageView) findViewById(v.getId());
+
+            if (!dicePicture.isSelected()) {
+                dicePicture.setColorFilter(Color.LTGRAY, PorterDuff.Mode.MULTIPLY);
+                dicePicture.setSelected(true);
+            }
+            else {
+                if(dicePicture.isClickable()) {
+                    dicePicture.setColorFilter(null);
+                    dicePicture.setSelected(false);
+                }
+            }
+
+            //validate qualifiers and calculate score
+            calcScore(v);
+
+            //check if turn can be ended
+            isSubmit();
+        }
+    }
+
     public void isSubmit() {
 
         qtyLocked();
@@ -288,7 +355,7 @@ public class oneFourTwentyFour extends AppCompatActivity {
             scorePost.setImageResource(R.drawable.postscorebutton_on_up);
         }
         else{
-            scorePost.setClickable(true);
+            scorePost.setClickable(false);
             scorePost.setImageResource(R.drawable.postscorebutton_off_down);
         }
 
@@ -421,105 +488,99 @@ public class oneFourTwentyFour extends AppCompatActivity {
             isQualifiedText.setText(R.string.not_qualified);
         }
 
-        currScoreText.setText(Integer.toString(currPlayerScore));
+        //call method to build and replace score token
+        buildScoreString();
     }
+
+
+    //build and replace score string token
+    public void buildScoreString() {
+        String currScoreString = TagFormat.from(getString(R.string.currPlayerScore))
+                .with("playerScore", currPlayerScore)
+                .format();
+
+        currPlayerScoreText.setText(currScoreString);
+    }
+
+    //build and replace player string token
+    public void buildPlayerString(){
+        String currPlayerString = TagFormat.from(getString(R.string.currPlayer))
+                .with("playerNumber", currPlayer)
+                .format();
+
+        currPlayerText.setText(currPlayerString);
+    }
+
 
     //User clicked submit button
     public void HandleSubmitScore(View v) {
-        //TODO: save score if qualified and start next turn
-        if(isQualifiedOne && isQualifiedOne){
+        //TODO: check if qualified and start next turn
+        if(isQualifiedOne && isQualifiedFour){
             playerScores.put(currPlayer, currPlayerScore);
         }
         else{
             playerScores.put(currPlayer, -1);
         }
 
-        //increment current player
-        currPlayer++;
 
         //go to next player or end round if last player has rolled
-        if(currPlayer <= qtyPlayers){
-            nextPlayer();
+        if(currPlayer < qtyPlayers){
+            //display score submit dialog
+            submitDialog();
         }
         else{
+            isLastPlayer = true;
+            //end round
             endRound();
         }
 
     }
 
-    //Reset for next player's roll
-    public void nextPlayer() {
-        //Display nextPlayer dialog
+    //All users have completed their rolls
+    public void submitDialog() {
+
+        //Build nextPlayer dialog
+        //Declare dialog box
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage("Your score: " + Integer.toString(currPlayerScore));
         //.setTitle(R.string.dialog_title);
         builder.setPositiveButton("next player", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
-                // User clicked OK button
-                isQualifiedOne = false;                 //0 if "One" is not locked yet
-                isQualifiedFour = false;                //0 if "Four" is not locked yet
-                isQualifiedOne_thisRoll = false;        //0 if "One" is not locked yet
-                isQualifiedFour_thisRoll = false;       //0 if "Four" is not locked yet
-                qtyOneSelected_thisRoll = 0;            //# of 1's selected on the current roll
-                qtyFourSelected_thisRoll = 0;           //# of 4's selected on the current roll
-
-                qtyPrevLocked = 0;
-
-                isFirstRoll = true;             //set to false after first roll
-                rollContinue = true;            //roll validated and may continue
-
-                diceValue1 = 0;                 //value of die at position 1
-                diceValue2 = 0;                 //value of die at position 2
-                diceValue3 = 0;                 //value of die at position 3
-                diceValue4 = 0;                 //value of die at position 4
-                diceValue5 = 0;                 //value of die at position 5
-                diceValue6 = 0;                 //value of die at position 6
-
-                rolling = false;		        //Is die rolling?
-
-                //create hashMap of dice values
-                diceValues.put(R.id.imageView1, 0);
-                diceValues.put(R.id.imageView2, 0);
-                diceValues.put(R.id.imageView3, 0);
-                diceValues.put(R.id.imageView4, 0);
-                diceValues.put(R.id.imageView5, 0);
-                diceValues.put(R.id.imageView6, 0);
-
-                dicePicture1.setClickable(false);
-                dicePicture2.setClickable(false);
-                dicePicture3.setClickable(false);
-                dicePicture4.setClickable(false);
-                dicePicture5.setClickable(false);
-                dicePicture6.setClickable(false);
-
-                scorePost.setClickable(false);
-
-                dicePicture1.setImageResource(R.drawable.dice3droll);
-                dicePicture2.setImageResource(R.drawable.dice3droll);
-                dicePicture3.setImageResource(R.drawable.dice3droll);
-                dicePicture4.setImageResource(R.drawable.dice3droll);
-                dicePicture5.setImageResource(R.drawable.dice3droll);
-                dicePicture6.setImageResource(R.drawable.dice3droll);
-
-                dicePicture1.setColorFilter(null);
-                dicePicture2.setColorFilter(null);
-                dicePicture3.setColorFilter(null);
-                dicePicture4.setColorFilter(null);
-                dicePicture5.setColorFilter(null);
-                dicePicture6.setColorFilter(null);
-
-                currPlayerText.setText("Player " + Integer.toString(currPlayer));
-                isQualifiedText.setText(R.string.not_qualified);
+                //increment current player
+                currPlayer++;
+                //initialize values for next player
+                turnInitialize();
             }
         });
 
+        //Display nextPlayer dialog
         AlertDialog nextPlayerDialog = builder.create();
         nextPlayerDialog.show();
     }
 
+
     //All users have completed their rolls
     public void endRound() {
 
+        //Build endRound dialog
+        //Declare dialog box
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("Round completed");
+        //.setTitle(R.string.dialog_title);
+        builder.setNegativeButton("game menu", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                // User clicked negative button
+            }
+        });
+        builder.setPositiveButton("new game", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                // User clicked positive button
+            }
+        });
+
+        //Display nextPlayer dialog
+        AlertDialog nextPlayerDialog = builder.create();
+        nextPlayerDialog.show();
     }
 
     //Clean up
