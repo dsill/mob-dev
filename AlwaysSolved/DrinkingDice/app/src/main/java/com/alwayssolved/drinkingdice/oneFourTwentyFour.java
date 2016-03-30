@@ -26,6 +26,7 @@ import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
+//TODO: add number of players dialog to start of game
 
 public class oneFourTwentyFour extends AppCompatActivity {
     int qtyDice = 6;                    //# of dice required for this game
@@ -132,7 +133,7 @@ public class oneFourTwentyFour extends AppCompatActivity {
 
     //Reset turn-specific values for next player's roll
     public void turnInitialize() {
-        //TODO:fix issue with dice not changing when new turn starts
+
         currPlayerScore = 0;                    //set new player's score to 0
 
         isQualifiedOne = false;                 //0 if "One" is not locked yet
@@ -436,7 +437,8 @@ public class oneFourTwentyFour extends AppCompatActivity {
 
     //User clicked roll button, lets start
     public void calcScore(View v) {
-
+        //TODO: only calculate score of first 4 non-qualifying dice
+        //TODO: auto end turn as soon as non-qualification can be determined
         dicePicture = (ImageView) findViewById(v.getId());
 
         int diceValue = diceValues.get(v.getId());
@@ -561,7 +563,7 @@ public class oneFourTwentyFour extends AppCompatActivity {
 
     //All users have completed their rolls
     public void endRound() {
-
+        //TODO: display scores and determine winner when round is completed
         //Build endRound dialog
         //Declare dialog box
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
