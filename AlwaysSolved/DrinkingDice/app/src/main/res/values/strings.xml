@@ -12,6 +12,7 @@
     <string name="is_qualified">Qualified</string>
     <string name="not_qualified">Not Qualified</string>
     <string name="not_qualified_msg">It is not possible for you to qualify</string>
+    <string name="not_possible_msg">You must select a qualifying value</string>
     <string name="none_selected">At least one die must be selected</string>
     <string name="currPlayerScore">Score: {playerScore}</string>
     <string name="currPlayer">Player {playerNumber}</string>
