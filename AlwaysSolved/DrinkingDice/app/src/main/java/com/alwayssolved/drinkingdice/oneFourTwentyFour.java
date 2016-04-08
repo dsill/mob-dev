@@ -4,19 +4,13 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
-import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import android.os.Handler;
 import android.os.Message;
-import android.support.annotation.StringRes;
 import android.support.design.widget.Snackbar;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.text.SpannableStringBuilder;
-import android.text.style.ImageSpan;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -42,7 +36,7 @@ public class oneFourTwentyFour extends AppCompatActivity {
     int qtyFourSelected_thisRoll;       //# of 4's selected on the current roll
 
     int qtyPrevLocked;                  //qty dice locked as of last roll
-    int qtyCurrLocked;                  //qty dice locked currently
+    int qtyQualLocked;                  //qty dice locked for qualification
 
     boolean isFirstRoll;                //set to false after first roll
     boolean rollContinue;               //roll validated and may continue
@@ -50,7 +44,7 @@ public class oneFourTwentyFour extends AppCompatActivity {
     boolean rolling;		            //Is die rolling?
     boolean isLastPlayer;               //Is this the final roller
 
-    String rollError;                   //roll validation error
+    int rollError;                      //roll validation error id
 
     int diceValue1;                     //value of die at position 1
     int diceValue2;                     //value of die at position 2
@@ -62,7 +56,7 @@ public class oneFourTwentyFour extends AppCompatActivity {
     Random rng = new Random();	        //generate random numbers
     SoundPool dice_sound = new SoundPool(1, AudioManager.STREAM_MUSIC, 0);
     int sound_id;		                //Used to control sound stream return by SoundPool
-    Handler handler;	                //Post message to start roll
+    Handler rollHandler;	            //Post message to start roll
     Timer timer = new Timer();	        //Used to implement feedback to user
 
     //Declare Views
@@ -124,8 +118,8 @@ public class oneFourTwentyFour extends AppCompatActivity {
         currPlayerScoreText = (TextView) findViewById(R.id.currPlayerScoreText);
 
 
-        //link handler to callback
-        handler = new Handler(callback);
+        //link rollHandler to callback
+        rollHandler = new Handler(callback);
 
         //call method to initialize turn-specific values
         turnInitialize();
@@ -144,9 +138,11 @@ public class oneFourTwentyFour extends AppCompatActivity {
         qtyFourSelected_thisRoll = 0;           //# of 4's selected on the current roll
 
         qtyPrevLocked = 0;
+        qtyQualLocked = 0;
 
         isFirstRoll = true;             //set to false after first roll
         rollContinue = true;            //roll validated and may continue
+        rollError = 0;
 
         diceValue1 = 0;                 //value of die at position 1
         diceValue2 = 0;                 //value of die at position 2
@@ -211,6 +207,8 @@ public class oneFourTwentyFour extends AppCompatActivity {
     //User clicked roll button, lets start
     public void HandleRollClick(View v) {
         //make sure at least one die was selected if not first roll
+        int rollEventID = 0;
+
         if(isFirstRoll) {
             //turn has started so make dice clickable
             dicePicture1.setClickable(true);
@@ -227,10 +225,16 @@ public class oneFourTwentyFour extends AppCompatActivity {
             isContinue();
         }
 
-        if(rollContinue) {
+        if(isContinue()) {
             //save values from previous roll
-            if(!isQualifiedOne && isQualifiedOne_thisRoll) {isQualifiedOne = true;}
-            if(!isQualifiedFour && isQualifiedFour_thisRoll) {isQualifiedFour = true;}
+            if(!isQualifiedOne && isQualifiedOne_thisRoll) {
+                isQualifiedOne = true;
+                qtyQualLocked++;
+            }
+            if(!isQualifiedFour && isQualifiedFour_thisRoll) {
+                isQualifiedFour = true;
+                qtyQualLocked++;
+            }
 
             //reset roll based values
             qtyOneSelected_thisRoll = 0;
@@ -302,30 +306,34 @@ public class oneFourTwentyFour extends AppCompatActivity {
         }
         else {
             //Display noneSelected error message
-            Snackbar noneSelected = Snackbar.make(findViewById(R.id.oneFourTwentyFourCoordinator), R.string.none_selected, Snackbar.LENGTH_LONG);
-            noneSelected.show();
+            rollEventID = 1;
+            eventHandler(rollEventID);
         }
     }
 
     //User clicked roll button, lets start
-    public void isContinue() {
-        //get current # of locked dice
-        qtyLocked();
+    public boolean isContinue() {
+        boolean isContinue = false;
 
-        if(qtyCurrLocked > qtyPrevLocked){
-            qtyPrevLocked = qtyCurrLocked;
-            rollContinue = true;
+        //calculate current # of locked dice
+        int qtyLocked = qtyLocked();
+
+        //if no dice were selected display message
+        if(qtyLocked > qtyPrevLocked){
+            qtyPrevLocked = qtyLocked;
+            isContinue = true;
         }
-        else {
-            rollContinue = false;
-            rollError = "At least one die must be selected...";
-        }
+
+        return isContinue;
     }
 
 
     //User clicked dice, lets start
     public void HandleDiceClick(View v) {
         if(!rolling) {
+            int clickedDiceValue;
+            int rollEventID = 0;
+
             dicePicture = (ImageView) findViewById(v.getId());
 
             if (!dicePicture.isSelected()) {
@@ -339,19 +347,29 @@ public class oneFourTwentyFour extends AppCompatActivity {
                 }
             }
 
-            //validate qualifiers and calculate score
-            calcScore(v);
+            clickedDiceValue = diceValues.get(v.getId());
 
-            //check if turn can be ended
-            isSubmit();
+            //check if selected dice prevent qualification
+            if(qtyNonQualLocked() > 4) {
+                if(!checkCanQualify(clickedDiceValue)){
+                    rollEventID = 3;
+                    eventHandler(rollEventID);
+                }
+            }
+
+            //if no roll events were encountered...
+            if(rollEventID == 0){
+                calcScore(v); //validate qualifiers and calculate score
+                isSubmit(); //check if turn can be ended
+            }
         }
     }
 
     public void isSubmit() {
 
-        qtyLocked();
+        int qtyLocked = qtyLocked();
 
-        if(qtyCurrLocked == 6){
+        if(qtyLocked == 6){
             scorePost.setClickable(true);
             scorePost.setImageResource(R.drawable.postscorebutton_on_up);
         }
@@ -362,23 +380,37 @@ public class oneFourTwentyFour extends AppCompatActivity {
 
     }
 
-    public void qtyLocked() {
-        qtyCurrLocked = 0;
+    //return qty of total selected
+    public int qtyLocked() {
+        int qtyLocked = 0;
 
-        if(dicePicture1.isSelected()){qtyCurrLocked++;}
-        if(dicePicture2.isSelected()){qtyCurrLocked++;}
-        if(dicePicture3.isSelected()){qtyCurrLocked++;}
-        if(dicePicture4.isSelected()){qtyCurrLocked++;}
-        if(dicePicture5.isSelected()){qtyCurrLocked++;}
-        if(dicePicture6.isSelected()){qtyCurrLocked++;}
+        if(dicePicture1.isSelected()){qtyLocked++;}
+        if(dicePicture2.isSelected()){qtyLocked++;}
+        if(dicePicture3.isSelected()){qtyLocked++;}
+        if(dicePicture4.isSelected()){qtyLocked++;}
+        if(dicePicture5.isSelected()){qtyLocked++;}
+        if(dicePicture6.isSelected()){qtyLocked++;}
 
+        return qtyLocked;
     }
+
+    //return qty of selected non-qualifiers
+    public int qtyNonQualLocked() {
+        int qtyNonQualLocked;
+        int qtyTotalLocked;
+
+        qtyTotalLocked = qtyLocked();
+        qtyNonQualLocked = qtyTotalLocked - qtyQualLocked;
+
+        return qtyNonQualLocked;
+    }
+
+
 
     //When pause completed message sent to callback
     class Roll extends TimerTask {
         public void run() {
-            handler.sendEmptyMessage(0);
-
+            rollHandler.sendEmptyMessage(0);
         }
     }
 
@@ -390,59 +422,173 @@ public class oneFourTwentyFour extends AppCompatActivity {
             if (!dicePicture1.isSelected()) {
                 //Show roll result
                 diceValue1 = rng.nextInt(6) + 1;
-                dicePicture1.setImageResource(diceImages.get(diceValue1));
+                //dicePicture1.setImageResource(diceImages.get(diceValue1));
                 diceValues.put(R.id.imageView1, diceValue1);
             }
 
             if (!dicePicture2.isSelected()) {
                 //Show roll result
                 diceValue2 = rng.nextInt(6) + 1;
-                dicePicture2.setImageResource(diceImages.get(diceValue2));
+                //dicePicture2.setImageResource(diceImages.get(diceValue2));
                 diceValues.put(R.id.imageView2, diceValue2);
             }
 
             if (!dicePicture3.isSelected()) {
                 //Show roll result
                 diceValue3 = rng.nextInt(6) + 1;
-                dicePicture3.setImageResource(diceImages.get(diceValue3));
+                //dicePicture3.setImageResource(diceImages.get(diceValue3));
                 diceValues.put(R.id.imageView3, diceValue3);
             }
 
             if (!dicePicture4.isSelected()) {
                 //Show roll result
                 diceValue4 = rng.nextInt(6) + 1;
-                dicePicture4.setImageResource(diceImages.get(diceValue4));
+                //dicePicture4.setImageResource(diceImages.get(diceValue4));
                 diceValues.put(R.id.imageView4, diceValue4);
             }
 
             if (!dicePicture5.isSelected()) {
                 //Show roll result
                 diceValue5 = rng.nextInt(6) + 1;
-                dicePicture5.setImageResource(diceImages.get(diceValue5));
+                //dicePicture5.setImageResource(diceImages.get(diceValue5));
                 diceValues.put(R.id.imageView5, diceValue5);
             }
 
             if (!dicePicture6.isSelected()) {
                 //Show roll result
                 diceValue6 = rng.nextInt(6) + 1;
-                dicePicture6.setImageResource(diceImages.get(diceValue6));
+                //dicePicture6.setImageResource(diceImages.get(diceValue6));
                 diceValues.put(R.id.imageView6, diceValue6);
             }
 
+            displayDice();      //display the dice for the values rolled and check post-roll rules
             rolling = false;	//user can press again
             return true;
+
+
         }
     };
+
+    //display dice face based on rolled value
+    public void displayDice() {
+
+        dicePicture1.setImageResource(diceImages.get(diceValue1));
+        dicePicture2.setImageResource(diceImages.get(diceValue2));
+        dicePicture3.setImageResource(diceImages.get(diceValue3));
+        dicePicture4.setImageResource(diceImages.get(diceValue4));
+        dicePicture5.setImageResource(diceImages.get(diceValue5));
+        dicePicture6.setImageResource(diceImages.get(diceValue6));
+
+        //post-roll rules
+        if(qtyNonQualLocked() >= 4) {checkCanQualify(0);}
+
+        //check if selected dice prevent qualification
+        if(qtyNonQualLocked() >= 4) {
+            if(!checkCanQualify(0)){
+                rollError = 2;
+                eventHandler(rollError);
+            }
+        }
+    }
+
+    //verify that selected die does not prevent qualification
+    public boolean checkCanQualify(int clickedDiceValue) {
+
+        boolean canQualify = false;
+        int activeDieValue1 = 0;
+        int activeDieValue2 = 0;
+
+        //end turn if it is no longer possible to qualify
+        if(!dicePicture1.isSelected()){
+            activeDieValue1 = diceValue1;
+        }
+
+        //determine values of remaining dice
+        if(!dicePicture2.isSelected()){
+            switch(activeDieValue1) {
+                case 0:
+                    activeDieValue1 = diceValue2;
+                    break;
+                default:
+                    activeDieValue2 = diceValue2;
+            }
+        }
+
+        if(!dicePicture3.isSelected()){
+            switch(activeDieValue1) {
+                case 0:
+                    activeDieValue1 = diceValue3;
+                    break;
+                default:
+                    activeDieValue2 = diceValue3;
+            }
+        }
+
+        if(!dicePicture4.isSelected()){
+            switch(activeDieValue1) {
+                case 0:
+                    activeDieValue1 = diceValue4;
+                    break;
+                default:
+                    activeDieValue2 = diceValue4;
+            }
+        }
+
+        if(!dicePicture5.isSelected()){
+            switch(activeDieValue1) {
+                case 0:
+                    activeDieValue1 = diceValue5;
+                    break;
+                default:
+                    activeDieValue2 = diceValue5;
+            }
+        }
+
+        if(!dicePicture6.isSelected()){
+            switch(activeDieValue1) {
+                case 0:
+                    activeDieValue1 = diceValue6;
+                    break;
+                default:
+                    activeDieValue2 = diceValue6;
+            }
+        }
+
+
+        //check if
+        if (!isQualifiedOne && !isQualifiedFour) {
+            if (activeDieValue1 == 1 || activeDieValue1 == 4 || activeDieValue2 == 1 || activeDieValue2 == 4 || clickedDiceValue == 1 || clickedDiceValue == 4) {
+                canQualify = true;
+            }
+        }
+        else if (isQualifiedOne && !isQualifiedFour) {
+            if (activeDieValue1 == 4 || activeDieValue2 == 4 || clickedDiceValue == 4) {
+                canQualify = true;
+            }
+        }
+        else if (!isQualifiedOne && isQualifiedFour) {
+            if (activeDieValue1 == 1 || activeDieValue2 == 1 || clickedDiceValue == 1) {
+                canQualify = true;
+            }
+        }
+        else {
+            canQualify = false;
+        }
+
+        return canQualify;
+    }
 
 
     //User clicked roll button, lets start
     public void calcScore(View v) {
-        //TODO: only calculate score of first 4 non-qualifying dice
-        //TODO: auto end turn as soon as non-qualification can be determined
+        //TODO: do not allow selection of non-qualifier when qualification is needed
+        //TODO: auto end turn by either non-qualification or last die rolled
         dicePicture = (ImageView) findViewById(v.getId());
 
+        //get numeric value of the selected die
         int diceValue = diceValues.get(v.getId());
 
+        //determine if selected die is a qualifier or if it is a score  modifier
         if (dicePicture.isSelected()) {
             if(diceValue == 1){qtyOneSelected_thisRoll++;}  //count # of 1's selected this roll
             if(diceValue == 4){qtyFourSelected_thisRoll++;} //count # of 4's selected this roll
@@ -494,6 +640,11 @@ public class oneFourTwentyFour extends AppCompatActivity {
         buildScoreString();
     }
 
+    //User clicked roll button, lets start
+    public void updateScore(Integer scoreValue) {
+        //add or subtract scoreValue from score
+    }
+
 
     //build and replace score string token
     public void buildScoreString() {
@@ -535,7 +686,32 @@ public class oneFourTwentyFour extends AppCompatActivity {
             //end round
             endRound();
         }
+    }
 
+    //handle events such as roll errors
+    public void eventHandler(int eventID) {
+
+        switch(eventID) {
+            case 1:
+                displaySnackBar(R.string.none_selected);
+                break;
+            case 2:
+                nonQualifyDialog();
+                break;
+            case 3:
+                displaySnackBar(R.string.not_possible_msg);
+                break;
+            default:
+                break;
+        }
+
+    }
+
+
+    //SnackBar builder
+    public void displaySnackBar(int stringResource) {
+        Snackbar snackMessage = Snackbar.make(findViewById(R.id.oneFourTwentyFourCoordinator), stringResource, Snackbar.LENGTH_LONG);
+        snackMessage.show();
     }
 
     //All users have completed their rolls
@@ -545,6 +721,28 @@ public class oneFourTwentyFour extends AppCompatActivity {
         //Declare dialog box
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage("Your score: " + Integer.toString(currPlayerScore));
+        //.setTitle(R.string.dialog_title);
+        builder.setPositiveButton("next player", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                //increment current player
+                currPlayer++;
+                //initialize values for next player
+                turnInitialize();
+            }
+        });
+
+        //Display nextPlayer dialog
+        AlertDialog nextPlayerDialog = builder.create();
+        nextPlayerDialog.show();
+    }
+
+    //All users have completed their rolls
+    public void nonQualifyDialog() {
+
+        //Build nextPlayer dialog
+        //Declare dialog box
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(R.string.not_qualified_msg);
         //.setTitle(R.string.dialog_title);
         builder.setPositiveButton("next player", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {

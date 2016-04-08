@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.alwayssolved.drinkingdice">
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_drinkingdice"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+        <activity
+            android:name=".Game_mainMenu"
+            android:label="@string/title_activity_game_main_menu"
+            android:theme="@style/AppTheme.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".Game_twoDice"
+            android:label="@string/title_activity_game_two_dice"
+            android:parentActivityName=".Game_mainMenu"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.alwayssolved.drinkingdice.Game_mainMenu" />
+        </activity>
+        <activity
+            android:name=".oneFourTwentyFour"
+            android:label="@string/title_activity_one_four_twenty_four"
+            android:parentActivityName=".Game_mainMenu"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.alwayssolved.drinkingdice.Game_mainMenu" />
+        </activity>
+    </application>
+
+</manifest>

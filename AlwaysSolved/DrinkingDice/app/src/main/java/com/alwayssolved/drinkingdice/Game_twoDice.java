@@ -63,7 +63,7 @@ public class Game_twoDice extends AppCompatActivity {
         dicePicture1.setClickable(false);
         dicePicture2.setClickable(false);
 
-        //link handler to callback
+        //link rollHandler to callback
         handler = new Handler(callback);
     }
 
